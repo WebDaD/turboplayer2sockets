@@ -13,7 +13,7 @@ const security = require('sigmundd-security')
 const version = require('./package.json').version
 
 const chokidar = require('chokidar');
-const parser = require('xml2json');
+var parser = require('fast-xml-parser');
 
 const { Server } = require("socket.io");
 
@@ -45,7 +45,21 @@ metrics.addCustomMetric({
 }, Metrics.MetricType.GAUGE);
 metrics.customMetrics['version'].labels(version).set(1)
 
-// TODO: metrics: xml changed, xml loaded, change of present, present item
+metrics.addCustomMetric({
+  name: 'present_item',
+  help: 'The Item which is loaded.',
+  labelNames: ['show_name', 'title', 'performer', 'duration']
+}, Metrics.MetricType.GAUGE);
+metrics.customMetrics['present_item'].labels('' ,'', '', '').set(1)
+
+metrics.addCustomMetric({
+  name: 'xml_update',
+  help: 'Number of Times XML File has been updated on disk'
+}, Metrics.MetricType.COUNTER);
+metrics.addCustomMetric({
+  name: 'present_update',
+  help: 'Number of Times Present Item has been updated'
+}, Metrics.MetricType.COUNTER);
 
 let present = {}
 
@@ -58,6 +72,10 @@ app.use(cors(corsOptions))
 
 app.get('/_version', (req, res) => {
   res.send(version)
+})
+
+app.get('/_config', (req, res) => {
+  res.json(config)
 })
 
 app.get('/_health', (req, res) => {
@@ -102,24 +120,35 @@ io.on('connection', (socket) => {
 
 chokidar.watch(config.turboplayerxml).on('all', (event, path) => {
   log.debug('XML ' + path + ' ' + event)
+  metrics.customMetrics['xml_update'].inc();
   loadTurboPlayerXML();
 });
 loadTurboPlayerXML();
 
-function loadTurboPlayerXML() { // TODO: allow for errors!
-  let xml = fs.readFileSync(config.turboplayerxml, 'utf8')
-  let json = JSON.parse(parser.toJson(xml));
-  let items = json.wddxPacket.item
-  if (Array.isArray(items)) {
-    for (const item of items) {
-      if (item.sequence === 'present') {
-        present = item;
+function loadTurboPlayerXML() {
+  try {
+    let xml = fs.readFileSync(config.turboplayerxml, 'utf8')
+    let json = parser.parse(xml, {attrNodeName: false, ignoreAttributes : false, attributeNamePrefix : "",});
+    console.dir(json.wddxPacket.item)
+    let items = json.wddxPacket.item
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        if (item.sequence === 'present') {
+          present = item;
+        }
       }
+    } else {
+      present = items;
     }
-  } else {
-    present = items;
+    metrics.customMetrics['present_item'].labels(present.Show_Name, present.Title, present.Music_Performer, present.Time_Duration).set(1)
+    metrics.customMetrics['present_update'].inc();
+    log.info('New Item: ' + JSON.stringify(present))
+    io.emit('present_update', present);
+  } catch (error) {
+    log.error(error)
+    io.emit('error', {});
   }
-  io.emit('present', present);
+  
 }
 
 server.listen(config.port)

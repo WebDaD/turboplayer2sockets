@@ -1,6 +1,6 @@
 {
   "port": 3000,
-  "turboplayerxml":"",
+  "turboplayerxml":"/opt/turboplayer.xml",
   "ssl": {
     "active": false,
     "key":"",

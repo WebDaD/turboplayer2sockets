@@ -1,19 +1,16 @@
 #!/bin/bash
 
-docker build -t bibelquiz/backend:latest . 
+docker build -t turboplayer2sockets:latest . 
 
-docker stop bibelquiz-backend || :
+docker stop turboplayer2sockets || :
 
-docker rm bibelquiz-backend || :
+docker rm turboplayer2sockets || :
 
 docker run \
---env DATABASE_DATABASE=${BQ_DATABASE_DATABASE} \
---env DATABASE_HOST=${BQ_DATABASE_HOST} \
---env DATABASE_USER=${BQ_DATABASE_USER} \
---env DATABASE_PASSWORD=${BQ_DATABASE_PASSWORD} \
---env LOG_LOGLEVEL=${BQ_LOGLEVEL} \
---name bibelquiz-backend \
+--volume "${T2S_TURBOPLAYER_XML}":/opt/turboplayer.xml:ro \
+--env LOG_LOGLEVEL="${T2S_LOGLEVEL}" \
+--name turboplayer2sockets \
 --restart unless-stopped \
 --network="host" \
--p ${BQ_BACKEND_PORT}:3000 \
--d bibelquiz/backend:latest
+-p "${T2S_PORT}":3000 \
+-d turboplayer2sockets:latest
