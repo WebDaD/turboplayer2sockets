@@ -1,0 +1,22 @@
+{
+  "port": 3000,
+  "turboplayerxml":"",
+  "ssl": {
+    "active": false,
+    "key":"",
+    "cert":""
+  },
+  "log": {
+    "name": "turboplayer2sockets",
+    "graylog": {
+      "active": false
+    },
+  "loglevel": "WARN"
+  },
+  "metrics": {},
+  "security": {
+    "allowedMethods":["GET", "OPTIONS"],
+    "onlyDefinedRoutes": false,
+    "definedRoutes": []
+  }
+}
