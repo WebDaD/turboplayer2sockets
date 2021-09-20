@@ -22,6 +22,12 @@ Example:
 }
 ```
 
+Additional Config from otherr packages:
+
+- Under the key __security__: <https://www.npmjs.com/package/sigmundd-security>
+- Under the key __log__: <https://www.npmjs.com/package/sigmundd-log>
+- Under the key __metrics__: <https://www.npmjs.com/package/sigmundd-metrics>
+
 ## Usage
 
 There are two ways to get information: Sockets and a REST-API.  
@@ -159,4 +165,3 @@ The Metrics are reachable via REST: `/_metrics` and consist fo the following sta
 ## TODO
 
 - unit tests
-- set new item only on change

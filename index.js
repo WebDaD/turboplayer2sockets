@@ -14,6 +14,8 @@ const version = require('./package.json').version
 
 const chokidar = require('chokidar');
 var parser = require('fast-xml-parser');
+var hash = require('object-hash');
+
 
 const { Server } = require("socket.io");
 
@@ -62,6 +64,7 @@ metrics.addCustomMetric({
 }, Metrics.MetricType.COUNTER);
 
 let present = {}
+let presentHash = ''
 
 let app = express()
 
@@ -129,21 +132,25 @@ function loadTurboPlayerXML() {
   try {
     let xml = fs.readFileSync(config.turboplayerxml, 'utf8')
     let json = parser.parse(xml, {attrNodeName: false, ignoreAttributes : false, attributeNamePrefix : "",});
-    console.dir(json.wddxPacket.item)
     let items = json.wddxPacket.item
+    let candidate = {}
     if (Array.isArray(items)) {
       for (const item of items) {
         if (item.sequence === 'present') {
-          present = item;
+          candidate = item;
         }
       }
     } else {
-      present = items;
+      candidate = items;
     }
-    metrics.customMetrics['present_item'].labels(present.Show_Name, present.Title, present.Music_Performer, present.Time_Duration).set(1)
-    metrics.customMetrics['present_update'].inc();
-    log.info('New Item: ' + JSON.stringify(present))
-    io.emit('present_update', present);
+    if (presentHash !== hash(candidate)) {
+      presentHash = hash(candidate)
+      present = candidate
+      metrics.customMetrics['present_item'].labels(present.Show_Name, present.Title, present.Music_Performer, present.Time_Duration).set(1)
+      metrics.customMetrics['present_update'].inc();
+      log.info('New Item: ' + JSON.stringify(present))
+      io.emit('present_update', present);
+    } 
   } catch (error) {
     log.error(error)
     io.emit('error', {});
