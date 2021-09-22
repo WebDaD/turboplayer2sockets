@@ -11,6 +11,5 @@ docker run \
 --env LOG_LOGLEVEL="${T2S_LOGLEVEL}" \
 --name turboplayer2sockets \
 --restart unless-stopped \
---network="host" \
 -p "${T2S_PORT}":3000 \
 -d turboplayer2sockets:latest
