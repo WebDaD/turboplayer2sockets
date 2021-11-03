@@ -12,7 +12,8 @@ const Metrics = require('sigmundd-metrics')
 const security = require('sigmundd-security')
 const version = require('./package.json').version
 
-const chokidar = require('chokidar');
+
+
 var parser = require('fast-xml-parser');
 var hash = require('object-hash');
 
@@ -57,6 +58,10 @@ metrics.customMetrics['present_item'].labels('' ,'', '', '').set(1)
 metrics.addCustomMetric({
   name: 'xml_update',
   help: 'Number of Times XML File has been updated on disk'
+}, Metrics.MetricType.COUNTER);
+metrics.addCustomMetric({
+  name: 'xml_poll',
+  help: 'Number of Times XML File has been polled'
 }, Metrics.MetricType.COUNTER);
 metrics.addCustomMetric({
   name: 'present_update',
@@ -128,11 +133,21 @@ io.on('connection', (socket) => {
   });
 });
 
-chokidar.watch(config.turboplayerxml).on('all', (event, path) => {
-  log.debug('XML ' + path + ' ' + event)
-  metrics.customMetrics['xml_update'].inc();
-  loadTurboPlayerXML();
-});
+if (config.filemode === 'watch') {
+  const chokidar = require('chokidar');
+  chokidar.watch(config.turboplayerxml).on('all', (event, path) => {
+    log.debug('XML ' + path + ' ' + event)
+    metrics.customMetrics['xml_update'].inc();
+    loadTurboPlayerXML();
+  });
+}
+if (config.filemode === 'poll') {
+  setInterval(() => {
+    log.debug('Polling ' + config.turboplayerxml)
+    metrics.customMetrics['xml_poll'].inc();
+    loadTurboPlayerXML();
+  }, config.pollinterval)
+}
 loadTurboPlayerXML();
 
 function loadTurboPlayerXML() {
@@ -150,14 +165,20 @@ function loadTurboPlayerXML() {
     } else {
       candidate = items;
     }
+    let time = new Date().toISOString();
     if (presentHash !== hash(candidate)) {
       presentHash = hash(candidate)
       present = candidate
       metrics.customMetrics['present_item'].labels(present.Show_Name, present.Title, present.Music_Performer, present.Time_Duration).set(1)
       metrics.customMetrics['present_update'].inc();
+      present.lastcheck = time
+      present.update = time
       log.info('New Item: ' + JSON.stringify(present))
       io.emit('present_update', present);
-    } 
+    } else {
+      present.lastcheck = time
+      log.debug('No Change')
+    }
   } catch (error) {
     log.error(error)
     io.emit('error', {});
