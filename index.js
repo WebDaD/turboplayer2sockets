@@ -137,7 +137,7 @@ loadTurboPlayerXML();
 
 function loadTurboPlayerXML() {
   try {
-    let xml = fs.readFileSync(config.turboplayerxml, 'utf8')
+    let xml = fs.readFileSync(config.turboplayerxml, 'utf16le')
     let json = parser.parse(xml, {attrNodeName: false, ignoreAttributes : false, attributeNamePrefix : "",});
     let items = json.wddxPacket.item
     let candidate = {}
