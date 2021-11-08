@@ -68,8 +68,17 @@ metrics.addCustomMetric({
   help: 'Number of Times Present Item has been updated'
 }, Metrics.MetricType.COUNTER);
 
-let present = {}
-let presentHash = ''
+let myItems = {
+  present: {},
+  past: {},
+  future: {}
+}
+let hashes = {
+  present: '',
+  past: '',
+  future: ''
+}
+
 
 let app = express()
 
@@ -100,7 +109,17 @@ app.get('/_ready', (req, res) => {
 
 app.get('/present', (req, res) => {
   log.debug('Get /present')
-  res.json(present)
+  res.json(myItems.present)
+})
+
+app.get('/past', (req, res) => {
+  log.debug('Get /past')
+  res.json(myItems.past)
+})
+
+app.get('/future', (req, res) => {
+  log.debug('Get /future')
+  res.json(myItems.future)
 })
 
 app.get('/_metrics', metrics.endpoint)
@@ -155,35 +174,41 @@ function loadTurboPlayerXML() {
     let xml = fs.readFileSync(config.turboplayerxml, 'utf16le')
     let json = parser.parse(xml, {attrNodeName: false, ignoreAttributes : false, attributeNamePrefix : "",});
     let items = json.wddxPacket.item
-    let candidate = {}
-    if (Array.isArray(items)) {
-      for (const item of items) {
-        if (item.sequence === 'present') {
-          candidate = item;
-        }
-      }
-    } else {
-      candidate = items;
-    }
-    let time = new Date().toISOString();
-    if (presentHash !== hash(candidate)) {
-      presentHash = hash(candidate)
-      present = candidate
-      metrics.customMetrics['present_item'].labels(present.Show_Name, present.Title, present.Music_Performer, present.Time_Duration).set(1)
-      metrics.customMetrics['present_update'].inc();
-      present.lastcheck = time
-      present.update = time
-      log.info('New Item: ' + JSON.stringify(present))
-      io.emit('present_update', present);
-    } else {
-      present.lastcheck = time
-      log.debug('No Change')
-    }
+    loadElement('present', items)
+    loadElement('past', items)
+    loadElement('future', items)
   } catch (error) {
     log.error(error)
     io.emit('error', {});
   }
   
+}
+
+function loadElement(sequence, items) {
+  let candidate = {}
+  if (Array.isArray(items)) {
+    for (const item of items) {
+      if (item.sequence === sequence) {
+        candidate = item;
+      }
+    }
+  } else {
+    candidate = items;
+  }
+  let time = new Date().toISOString();
+  if (hashes[sequence] !== hash(candidate)) {
+    hashes[sequence] = hash(candidate)
+    metrics.customMetrics[sequence + '_item'].labels(candidate.Show_Name, candidate.Title, candidate.Music_Performer, candidate.Time_Duration).set(1)
+    metrics.customMetrics[sequence + '_update'].inc();
+    candidate.lastcheck = time
+    candidate.update = time
+    log.info('New Item: ' + JSON.stringify(candidate))
+    io.emit(sequence + '_update', candidate);
+    myItems[sequence] = candidate;
+  } else {
+    myItems[sequence].lastcheck = time
+    log.debug('No Change')
+  }
 }
 
 server.listen(config.port)
