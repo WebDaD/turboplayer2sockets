@@ -1,6 +1,6 @@
 {
   "name": "turboplayer2sockets",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Tracks Turboplayer-Export-XML and presents the data with sockets.",
   "main": "index.js",
   "scripts": {
