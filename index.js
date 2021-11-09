@@ -56,6 +56,21 @@ metrics.addCustomMetric({
 metrics.customMetrics['present_item'].labels('' ,'', '', '').set(1)
 
 metrics.addCustomMetric({
+  name: 'past_item',
+  help: 'The past Item which is loaded.',
+  labelNames: ['show_name', 'title', 'performer', 'duration']
+}, Metrics.MetricType.GAUGE);
+metrics.customMetrics['past_item'].labels('' ,'', '', '').set(1)
+
+metrics.addCustomMetric({
+  name: 'future_item',
+  help: 'The future Item which is loaded.',
+  labelNames: ['show_name', 'title', 'performer', 'duration']
+}, Metrics.MetricType.GAUGE);
+metrics.customMetrics['future_item'].labels('' ,'', '', '').set(1)
+
+
+metrics.addCustomMetric({
   name: 'xml_update',
   help: 'Number of Times XML File has been updated on disk'
 }, Metrics.MetricType.COUNTER);
@@ -66,6 +81,14 @@ metrics.addCustomMetric({
 metrics.addCustomMetric({
   name: 'present_update',
   help: 'Number of Times Present Item has been updated'
+}, Metrics.MetricType.COUNTER);
+metrics.addCustomMetric({
+  name: 'past_update',
+  help: 'Number of Times past Item has been updated'
+}, Metrics.MetricType.COUNTER);
+metrics.addCustomMetric({
+  name: 'future_update',
+  help: 'Number of Times future Item has been updated'
 }, Metrics.MetricType.COUNTER);
 
 let myItems = {

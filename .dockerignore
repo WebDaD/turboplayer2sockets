@@ -4,4 +4,6 @@ config.json
 docker.sh
 Dockerfile
 tp.xml
-.eenv
+.env
+build.sh
+deploy.sh
