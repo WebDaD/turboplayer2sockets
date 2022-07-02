@@ -70,9 +70,13 @@ The present item consists of the following fields:
 
 - __sequence__ : The Current sequence. always `present`
 - __Show_Name__: The Name of the current show as string
+- __Presenter__: The presenter (mod) of the current show
 - __Title__: The Title of the current song
 - __Music_Performer__: The Performer of the current song
 - __Time_Duration__: The planned duration of the current song in MM:SS.fff
+- __Show_Time_Start__: The StartTime of the current show in YYYY-mm-dd HH:MM:SS.fff
+- __Show_Time_Stop__: The StopTime of the current show in YYYY-mm-dd HH:MM:SS.fff
+
 
 Example:
 
@@ -80,9 +84,12 @@ Example:
 {
   "sequence": "present",
   "Show_Name": "Amsl Nicenstein",
+  "Presenter": "Someone does",
   "Title": "Yarama Bastıkca",
   "Music_Performer": "Ah! Kosmos & Özgür Yılmaz",
-  "Time_Duration": "00:04:23.000"
+  "Time_Duration": "00:04:23.000",
+  "Show_Time_Start": "2022-07-02 07:30:00.000",
+  "Show_Time_Stop": "2022-07-02 12:00:00.000",
 }
 ```
 
