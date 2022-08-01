@@ -206,7 +206,7 @@ function loadTurboPlayerXML() {
   }
   
 }
-
+                                          
 function loadElement(sequence, items) {
   let candidate = {}
   if (Array.isArray(items)) {
@@ -219,7 +219,7 @@ function loadElement(sequence, items) {
     candidate = items;
   }
   let time = new Date().toISOString();
-  if (hashes[sequence] !== hash(candidate)) {
+  if (hashes[sequence] !== hash(candidate) && canditate.Class === 'Music') {
     hashes[sequence] = hash(candidate)
     metrics.customMetrics[sequence + '_item'].labels(candidate.Show_Name, candidate.Title, candidate.Music_Performer, candidate.Time_Duration).set(1)
     metrics.customMetrics[sequence + '_update'].inc();
