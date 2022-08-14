@@ -86,7 +86,7 @@ let myItems = {
   past: [],
 }
 
-let hash = ''
+let current_hash = ''
 
 
 let app = express()
@@ -198,15 +198,18 @@ function loadElement(items) {
     candidate = items;
   }
   let time = new Date().toISOString();
-  if (hash !== hash(candidate) ){
-    hash = hash(candidate)
+  if (current_hash !== hash(candidate) ){
+    current_hash = hash(candidate)
     metrics.customMetrics['present_item'].labels(candidate.Show_Name, candidate.Title, candidate.Music_Performer, candidate.Time_Duration).set(1)
     metrics.customMetrics['present_update'].inc();
     candidate.lastcheck = time
     candidate.update = time
     log.info('New Item: ' + JSON.stringify(candidate))
     io.emit('present_update', candidate);
-    myItems.past.push(myItems.present)
+    if (Object.keys(myItems.present).length !== 0) {
+      log.debug('Added to past: ' + JSON.stringify(myItems.present))
+      myItems.past.push(myItems.present)
+    }
     myItems.present = candidate;
   } else {
     myItems.present.lastcheck = time
