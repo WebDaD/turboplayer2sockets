@@ -62,13 +62,6 @@ metrics.addCustomMetric({
 }, Metrics.MetricType.GAUGE);
 metrics.customMetrics['past_item'].labels('' ,'', '', '').set(1)
 
-metrics.addCustomMetric({
-  name: 'future_item',
-  help: 'The future Item which is loaded.',
-  labelNames: ['show_name', 'title', 'performer', 'duration']
-}, Metrics.MetricType.GAUGE);
-metrics.customMetrics['future_item'].labels('' ,'', '', '').set(1)
-
 
 metrics.addCustomMetric({
   name: 'xml_update',
@@ -86,21 +79,14 @@ metrics.addCustomMetric({
   name: 'past_update',
   help: 'Number of Times past Item has been updated'
 }, Metrics.MetricType.COUNTER);
-metrics.addCustomMetric({
-  name: 'future_update',
-  help: 'Number of Times future Item has been updated'
-}, Metrics.MetricType.COUNTER);
+
 
 let myItems = {
   present: {},
-  past: {},
-  future: {}
+  past: [],
 }
-let hashes = {
-  present: '',
-  past: '',
-  future: ''
-}
+
+let hash = ''
 
 
 let app = express()
@@ -138,11 +124,6 @@ app.get('/present', (req, res) => {
 app.get('/past', (req, res) => {
   log.debug('Get /past')
   res.json(myItems.past)
-})
-
-app.get('/future', (req, res) => {
-  log.debug('Get /future')
-  res.json(myItems.future)
 })
 
 app.get('/_metrics', metrics.endpoint)
@@ -197,9 +178,7 @@ function loadTurboPlayerXML() {
     let xml = fs.readFileSync(config.turboplayerxml, 'utf16le')
     let json = parser.parse(xml, {attrNodeName: false, ignoreAttributes : false, attributeNamePrefix : "",});
     let items = json.wddxPacket.item
-    loadElement('present', items)
-    loadElement('past', items)
-    loadElement('future', items)
+    loadElement(items)
   } catch (error) {
     log.error(error)
     io.emit('error', {});
@@ -207,11 +186,11 @@ function loadTurboPlayerXML() {
   
 }
                                           
-function loadElement(sequence, items) {
+function loadElement(items) {
   let candidate = {}
   if (Array.isArray(items)) {
     for (const item of items) {
-      if (item.sequence === sequence) {
+      if (item.sequence === 'present') {
         candidate = item;
       }
     }
@@ -219,17 +198,18 @@ function loadElement(sequence, items) {
     candidate = items;
   }
   let time = new Date().toISOString();
-  if (hashes[sequence] !== hash(candidate) ){
-    hashes[sequence] = hash(candidate)
-    metrics.customMetrics[sequence + '_item'].labels(candidate.Show_Name, candidate.Title, candidate.Music_Performer, candidate.Time_Duration).set(1)
-    metrics.customMetrics[sequence + '_update'].inc();
+  if (hash !== hash(candidate) ){
+    hash = hash(candidate)
+    metrics.customMetrics['present_item'].labels(candidate.Show_Name, candidate.Title, candidate.Music_Performer, candidate.Time_Duration).set(1)
+    metrics.customMetrics['present_update'].inc();
     candidate.lastcheck = time
     candidate.update = time
     log.info('New Item: ' + JSON.stringify(candidate))
-    io.emit(sequence + '_update', candidate);
-    myItems[sequence] = candidate;
+    io.emit('present_update', candidate);
+    myItems.past.push(myItems.present)
+    myItems.present = candidate;
   } else {
-    myItems[sequence].lastcheck = time
+    myItems.present.lastcheck = time
     log.debug('No Change')
   }
 }
